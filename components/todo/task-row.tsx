@@ -77,9 +77,9 @@ export function TaskRow({
         onClick={onDelete}
         aria-label="Delete task"
         title="Delete task"
-        className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:bg-secondary group-hover:text-muted-foreground hover:!text-primary"
+        className="ml-1 flex shrink-0 items-center justify-center rounded-md border border-border bg-background p-1 text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-primary"
       >
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="h-4 w-4" />
       </button>
     </div>
   )
