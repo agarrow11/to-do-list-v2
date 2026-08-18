@@ -76,7 +76,8 @@ export function TaskRow({
       <button
         onClick={onDelete}
         aria-label="Delete task"
-        className="shrink-0 rounded p-0.5 text-transparent hover:bg-secondary group-hover:text-muted-foreground hover:!text-primary"
+        title="Delete task"
+        className="shrink-0 rounded p-0.5 text-muted-foreground/40 hover:bg-secondary group-hover:text-muted-foreground hover:!text-primary"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
