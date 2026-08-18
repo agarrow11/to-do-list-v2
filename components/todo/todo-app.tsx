@@ -386,6 +386,10 @@ export function TodoApp() {
           currentOwnerId={dialogTarget.ownerId}
           currentSectionId={dialogTarget.sectionId}
           onMove={(ownerId, sectionId) => moveTask(dialogTarget, ownerId, sectionId)}
+          onDelete={() => {
+            deleteTask(dialogTarget.ownerId, dialogTarget.sectionId, dialogTarget.taskId)
+            setDialogTarget(null)
+          }}
           onClose={() => setDialogTarget(null)}
           onChange={(patch) => patchTask(dialogTarget, patch)}
         />

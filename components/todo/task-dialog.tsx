@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { X, Paperclip, Trash2, Download, FileText, MoveRight } from "lucide-react"
+import { X, Paperclip, Trash2, Download, FileText, MoveRight, Pencil } from "lucide-react"
 import type { Attachment, OwnerKind, Task } from "./types"
 import { uid } from "./store"
 
@@ -37,6 +37,7 @@ export function TaskDialog({
   currentOwnerId,
   currentSectionId,
   onMove,
+  onDelete,
   onClose,
   onChange,
 }: {
@@ -47,6 +48,7 @@ export function TaskDialog({
   currentOwnerId: string
   currentSectionId: string
   onMove: (ownerId: string, sectionId: string) => void
+  onDelete: () => void
   onClose: () => void
   onChange: (patch: Partial<Task>) => void
 }) {
@@ -128,20 +130,24 @@ export function TaskDialog({
         className="mt-6 w-full max-w-xl rounded-md border border-border bg-card shadow-xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               {ownerLabel} <span className="text-primary">/</span> {sectionTitle}
             </p>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={commitTitle}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-              }}
-              className="mt-1 w-full bg-transparent text-lg font-bold text-foreground outline-none focus:border-b focus:border-primary"
-              aria-label="Task title"
-            />
+            <label className="mt-1.5 flex items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1.5 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+              <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                }}
+                className="w-full bg-transparent text-lg font-bold text-foreground outline-none"
+                aria-label="Task title"
+                placeholder="Task name"
+              />
+            </label>
           </div>
           <button
             onClick={onClose}
@@ -263,7 +269,16 @@ export function TaskDialog({
           </div>
         </div>
 
-        <div className="flex justify-end border-t border-border px-5 py-3">
+        <div className="flex items-center justify-between border-t border-border px-5 py-3">
+          <button
+            onClick={() => {
+              if (window.confirm(`Delete "${task.title}"? This can't be undone.`)) onDelete()
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold text-primary hover:bg-accent"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete task
+          </button>
           <button
             onClick={onClose}
             className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
