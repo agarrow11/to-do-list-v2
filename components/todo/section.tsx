@@ -141,9 +141,7 @@ export function SectionCard({
           }}
           placeholder="Add a task and press Enter"
           aria-label="Add a task"
-          className={`min-w-0 flex-1 rounded border border-input bg-background px-2 py-1.5 text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary ${
-            compact ? "text-xs" : "text-sm"
-          }`}
+          className="min-w-0 flex-1 rounded border border-input bg-background px-2 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
         />
         <button
           onClick={submitDraft}
