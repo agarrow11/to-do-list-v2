@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check } from "lucide-react"
 import type { Board, Owner, Section, Task } from "./types"
-import { defaultBoard, loadBoard, saveBoard, newTask, newSection, taskMatchesQuery, exportBackup, parseBackup } from "./store"
+import { defaultBoard, loadBoard, saveBoard, newTask, newSection, newReport, taskMatchesQuery, exportBackup, parseBackup } from "./store"
 import { SectionCard } from "./section"
 import { TaskDialog, type MoveOwner } from "./task-dialog"
 import { exportBoardToExcel } from "./export-excel"
@@ -118,6 +118,11 @@ export function TodoApp() {
     }))
   }
 
+  // Adds a new "My Team" section (a report owner with one flat task list).
+  function addReport() {
+    setBoard((b) => ({ ...b, owners: [...b.owners, newReport("New team member")] }))
+  }
+
   function reorderTasks(ownerId: string, sectionId: string, fromTaskId: string, toTaskId: string) {
     mapSection(ownerId, sectionId, (s) => {
       const from = s.tasks.findIndex((t) => t.id === fromTaskId)
@@ -192,6 +197,13 @@ export function TodoApp() {
   // ---- Derived ------------------------------------------------------------
   const me = board.owners.find((o) => o.kind === "me")
   const reports = board.owners.filter((o) => o.kind === "report")
+  const teamCount = reports.reduce(
+    (acc, r) => {
+      const c = countTasks(r)
+      return { done: acc.done + c.done, total: acc.total + c.total }
+    },
+    { done: 0, total: 0 },
+  )
 
   const q = query.trim().toLowerCase()
   const searching = q.length > 0
@@ -377,9 +389,19 @@ export function TodoApp() {
 
           {/* My team — 1/3 */}
           <div className="min-w-0 lg:w-1/3">
-            <div className="flex items-center gap-2 border-b-2 border-primary pb-1.5">
-              <h2 className="text-sm font-bold uppercase tracking-wide">My team</h2>
-              <span className="text-[11px] text-muted-foreground">{reports.length} people</span>
+            <div className="border-b-2 border-primary pb-1.5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold uppercase tracking-wide">My team</h2>
+                <span className="text-[11px] text-muted-foreground">{reports.length} people</span>
+                <button
+                  onClick={addReport}
+                  className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-secondary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Section
+                </button>
+              </div>
+              <ProgressBar done={teamCount.done} total={teamCount.total} className="mt-1.5" />
             </div>
             <div className="mt-3 space-y-4">
               {reports.map((report) => (
@@ -388,7 +410,6 @@ export function TodoApp() {
                   report={report}
                   hideCompleted={board.hideCompleted}
                   query={query}
-                  onAddSection={() => addSection(report.id)}
                   onAddTask={(sectionId, title) => addTask(report.id, sectionId, title)}
                   onToggleTask={(sectionId, taskId) => toggleTask(report.id, sectionId, taskId)}
                   onOpenTask={(sectionId, task) =>
@@ -562,7 +583,6 @@ function ReportPanel({
   report,
   hideCompleted,
   query = "",
-  onAddSection,
   onAddTask,
   onToggleTask,
   onOpenTask,
@@ -576,7 +596,6 @@ function ReportPanel({
   report: Owner
   hideCompleted: boolean
   query?: string
-  onAddSection: () => void
   onAddTask: (sectionId: string, title: string) => void
   onToggleTask: (sectionId: string, taskId: string) => void
   onOpenTask: (sectionId: string, task: Task) => void
@@ -621,14 +640,6 @@ function ReportPanel({
         <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
           {count.done}/{count.total}
         </span>
-        <button
-          onClick={onAddSection}
-          aria-label={`Add section for ${report.name}`}
-          className="inline-flex shrink-0 items-center gap-1 rounded border border-input bg-background px-1.5 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary"
-        >
-          <Plus className="h-3 w-3" />
-          Section
-        </button>
       </div>
       <ProgressBar done={count.done} total={count.total} className="mb-2.5" />
       <div className="space-y-2.5">
