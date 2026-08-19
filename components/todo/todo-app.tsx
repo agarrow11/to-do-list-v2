@@ -197,6 +197,13 @@ export function TodoApp() {
   // ---- Derived ------------------------------------------------------------
   const me = board.owners.find((o) => o.kind === "me")
   const reports = board.owners.filter((o) => o.kind === "report")
+  const teamCount = reports.reduce(
+    (acc, r) => {
+      const c = countTasks(r)
+      return { done: acc.done + c.done, total: acc.total + c.total }
+    },
+    { done: 0, total: 0 },
+  )
 
   const q = query.trim().toLowerCase()
   const searching = q.length > 0
@@ -382,16 +389,19 @@ export function TodoApp() {
 
           {/* My team — 1/3 */}
           <div className="min-w-0 lg:w-1/3">
-            <div className="flex items-center gap-2 border-b-2 border-primary pb-1.5">
-              <h2 className="text-sm font-bold uppercase tracking-wide">My team</h2>
-              <span className="text-[11px] text-muted-foreground">{reports.length} people</span>
-              <button
-                onClick={addReport}
-                className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-secondary"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Section
-              </button>
+            <div className="border-b-2 border-primary pb-1.5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold uppercase tracking-wide">My team</h2>
+                <span className="text-[11px] text-muted-foreground">{reports.length} people</span>
+                <button
+                  onClick={addReport}
+                  className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-secondary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Section
+                </button>
+              </div>
+              <ProgressBar done={teamCount.done} total={teamCount.total} className="mt-1.5" />
             </div>
             <div className="mt-3 space-y-4">
               {reports.map((report) => (
