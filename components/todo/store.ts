@@ -22,6 +22,16 @@ export function newSection(title: string): Section {
   return { id: uid(), title: title.trim() || "New section", tasks: [] }
 }
 
+// A new "My Team" section — a report owner with a single flat task list.
+export function newReport(name: string): Owner {
+  return {
+    id: uid(),
+    name: name.trim() || "New team member",
+    kind: "report",
+    sections: [{ id: uid(), title: "Current work", tasks: [] }],
+  }
+}
+
 const REPORT_NAMES = ["Chirag", "Ewelina", "Jagoda", "Szymon"]
 
 export function defaultBoard(): Board {
