@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { X, Paperclip, Trash2, Download, FileText, MoveRight, Pencil } from "lucide-react"
 import type { Attachment, OwnerKind, Task } from "./types"
 import { uid } from "./store"
+import { RichTextEditor } from "./rich-text-editor"
 
 export type MoveOwner = {
   id: string
@@ -53,7 +54,6 @@ export function TaskDialog({
   onChange: (patch: Partial<Task>) => void
 }) {
   const [title, setTitle] = useState(task.title)
-  const [notes, setNotes] = useState(task.notes)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -69,7 +69,6 @@ export function TaskDialog({
   // Keep local fields in sync if the task object identity changes.
   useEffect(() => {
     setTitle(task.title)
-    setNotes(task.notes)
   }, [task.id])
 
   useEffect(() => {
@@ -84,10 +83,6 @@ export function TaskDialog({
     const trimmed = title.trim()
     if (trimmed && trimmed !== task.title) onChange({ title: trimmed })
     else setTitle(task.title)
-  }
-
-  function commitNotes() {
-    if (notes !== task.notes) onChange({ notes })
   }
 
   async function handleFiles(files: FileList | null) {
@@ -196,13 +191,13 @@ export function TaskDialog({
             <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Description / notes
             </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              onBlur={commitNotes}
-              rows={6}
+            <RichTextEditor
+              taskId={task.id}
+              initialHtml={task.notes}
+              onCommit={(html) => {
+                if (html !== task.notes) onChange({ notes: html })
+              }}
               placeholder="Add context, links, next steps…"
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>
 

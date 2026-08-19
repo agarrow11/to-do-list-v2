@@ -163,3 +163,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Rich-text task notes: restore list markers stripped by the base reset. */
+.rte ul {
+  list-style: disc;
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+.rte ol {
+  list-style: decimal;
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+.rte li {
+  margin: 0.125rem 0;
+}
+.rte b,
+.rte strong {
+  font-weight: 700;
+}
