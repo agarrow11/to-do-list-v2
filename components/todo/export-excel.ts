@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx"
 import type { Board } from "./types"
+import { htmlToPlainText } from "./rich-text"
 
 function formatDate(ms: number | null): string {
   if (!ms) return ""
@@ -32,7 +33,7 @@ export function exportBoardToExcel(board: Board): void {
           Section: section.title,
           Task: task.title,
           Status: task.done ? "Done" : "Open",
-          Notes: task.notes || "",
+          Notes: htmlToPlainText(task.notes),
           Attachments: task.attachments.map((a) => a.name).join(", "),
           Created: formatDate(task.createdAt),
           Completed: formatDate(task.completedAt),

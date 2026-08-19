@@ -3,6 +3,7 @@
 import type React from "react"
 import { Check, GripVertical, Paperclip, StickyNote, Trash2 } from "lucide-react"
 import type { Task } from "./types"
+import { htmlHasContent } from "./rich-text"
 
 export function TaskRow({
   task,
@@ -25,7 +26,7 @@ export function TaskRow({
   dragging?: boolean
   over?: boolean
 }) {
-  const hasNotes = task.notes.trim().length > 0
+  const hasNotes = htmlHasContent(task.notes)
   const hasAttachments = task.attachments.length > 0
 
   return (
