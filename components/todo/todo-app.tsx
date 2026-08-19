@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload } from "lucide-react"
+import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check } from "lucide-react"
 import type { Board, Owner, Section, Task } from "./types"
 import { defaultBoard, loadBoard, saveBoard, newTask, newSection, taskMatchesQuery, exportBackup, parseBackup } from "./store"
 import { SectionCard } from "./section"
@@ -23,6 +23,8 @@ export function TodoApp() {
   const [mounted, setMounted] = useState(false)
   const [dialogTarget, setDialogTarget] = useState<DialogTarget | null>(null)
   const [saveError, setSaveError] = useState(false)
+  const [lastSaved, setLastSaved] = useState<number | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
   const [query, setQuery] = useState("")
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const restoreInputRef = useRef<HTMLInputElement>(null)
@@ -33,18 +35,32 @@ export function TodoApp() {
     setMounted(true)
   }, [])
 
+  // Write the board to localStorage now, recording the timestamp.
+  function persist(next: Board) {
+    try {
+      saveBoard(next)
+      setLastSaved(Date.now())
+      setSaveError(false)
+      return true
+    } catch {
+      setSaveError(true)
+      return false
+    }
+  }
+
+  // Manual save triggered by the "Save now" button.
+  function saveNow() {
+    if (persist(board)) {
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 1500)
+    }
+  }
+
   // Auto-save (debounced) whenever the board changes.
   useEffect(() => {
     if (!mounted) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      try {
-        saveBoard(board)
-        setSaveError(false)
-      } catch {
-        setSaveError(true)
-      }
-    }, 300)
+    saveTimer.current = setTimeout(() => persist(board), 300)
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
@@ -231,7 +247,9 @@ export function TodoApp() {
             <span className="inline-block h-6 w-6 rounded-sm bg-primary" aria-hidden />
             <div className="leading-tight">
               <h1 className="text-base font-bold tracking-tight">To-Do</h1>
-              <p className="text-[11px] text-muted-foreground">Auto-saved in this browser</p>
+              <p className="text-[11px] text-muted-foreground">
+                {lastSaved ? `Last saved ${formatSaved(lastSaved)}` : "Auto-saved in this browser"}
+              </p>
             </div>
           </div>
 
@@ -280,6 +298,18 @@ export function TodoApp() {
             >
               {board.hideCompleted ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               {board.hideCompleted ? "Completed hidden" : "Hide completed"}
+            </button>
+            <button
+              onClick={saveNow}
+              aria-label="Save now to this browser"
+              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                justSaved
+                  ? "border-primary bg-accent text-primary"
+                  : "border-input bg-background text-foreground hover:bg-secondary"
+              }`}
+            >
+              {justSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+              {justSaved ? "Saved" : "Save now"}
             </button>
             <DataMenu onBackup={() => exportBackup(board)} onRestore={() => restoreInputRef.current?.click()} />
             <button
@@ -399,6 +429,13 @@ export function TodoApp() {
 }
 
 // ---- Small helpers ----------------------------------------------------------
+
+function formatSaved(ts: number): string {
+  const d = new Date(ts)
+  const date = d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })
+  return `${date} at ${time}`
+}
 
 function countTasks(owner?: Owner): { done: number; total: number } {
   if (!owner) return { done: 0, total: 0 }
