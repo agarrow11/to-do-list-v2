@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check } from "lucide-react"
+import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check, ImagePlus } from "lucide-react"
 import type { Board, Owner, Section, Task } from "./types"
 import { defaultBoard, loadBoard, saveBoard, newTask, newSection, newReport, taskMatchesQuery, exportBackup, parseBackup } from "./store"
 import { SectionCard } from "./section"
 import { TaskDialog, type MoveOwner } from "./task-dialog"
+import { ImageImportDialog } from "./image-import-dialog"
 import { exportBoardToExcel } from "./export-excel"
 import { useListDnd } from "./use-list-dnd"
 
@@ -26,6 +27,9 @@ export function TodoApp() {
   const [lastSaved, setLastSaved] = useState<number | null>(null)
   const [justSaved, setJustSaved] = useState(false)
   const [query, setQuery] = useState("")
+  const [imageImportOpen, setImageImportOpen] = useState(false)
+  const [droppedImage, setDroppedImage] = useState<File | null>(null)
+  const [pageDragActive, setPageDragActive] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const restoreInputRef = useRef<HTMLInputElement>(null)
 
@@ -33,6 +37,44 @@ export function TodoApp() {
   useEffect(() => {
     setBoard(loadBoard())
     setMounted(true)
+  }, [])
+
+  // Let the user drag an image file anywhere onto the page to import tasks.
+  useEffect(() => {
+    let depth = 0
+    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files")
+    const onEnter = (e: DragEvent) => {
+      if (!hasFiles(e)) return
+      depth++
+      setPageDragActive(true)
+    }
+    const onLeave = (e: DragEvent) => {
+      if (!hasFiles(e)) return
+      depth = Math.max(0, depth - 1)
+      if (depth === 0) setPageDragActive(false)
+    }
+    const onOver = (e: DragEvent) => {
+      if (hasFiles(e)) e.preventDefault()
+    }
+    const onDrop = (e: DragEvent) => {
+      depth = 0
+      setPageDragActive(false)
+      const file = e.dataTransfer?.files?.[0]
+      if (!file || !file.type.startsWith("image/")) return
+      e.preventDefault()
+      setDroppedImage(file)
+      setImageImportOpen(true)
+    }
+    window.addEventListener("dragenter", onEnter)
+    window.addEventListener("dragleave", onLeave)
+    window.addEventListener("dragover", onOver)
+    window.addEventListener("drop", onDrop)
+    return () => {
+      window.removeEventListener("dragenter", onEnter)
+      window.removeEventListener("dragleave", onLeave)
+      window.removeEventListener("dragover", onOver)
+      window.removeEventListener("drop", onDrop)
+    }
   }, [])
 
   // Write the board to localStorage now, recording the timestamp.
@@ -78,6 +120,11 @@ export function TodoApp() {
 
   function addTask(ownerId: string, sectionId: string, title: string) {
     mapSection(ownerId, sectionId, (s) => ({ ...s, tasks: [...s.tasks, newTask(title)] }))
+  }
+
+  // Append several tasks at once (used by the image importer).
+  function importTasks(ownerId: string, sectionId: string, titles: string[]) {
+    mapSection(ownerId, sectionId, (s) => ({ ...s, tasks: [...s.tasks, ...titles.map((t) => newTask(t))] }))
   }
 
   function toggleTask(ownerId: string, sectionId: string, taskId: string) {
@@ -312,6 +359,16 @@ export function TodoApp() {
               {board.hideCompleted ? "Completed hidden" : "Hide completed"}
             </button>
             <button
+              onClick={() => {
+                setDroppedImage(null)
+                setImageImportOpen(true)
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary"
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+              Import from image
+            </button>
+            <button
               onClick={saveNow}
               aria-label="Save now to this browser"
               className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
@@ -444,6 +501,29 @@ export function TodoApp() {
           onClose={() => setDialogTarget(null)}
           onChange={(patch) => patchTask(dialogTarget, patch)}
         />
+      )}
+
+      {imageImportOpen && (
+        <ImageImportDialog
+          owners={moveOwners}
+          initialFile={droppedImage}
+          onImport={importTasks}
+          onClose={() => {
+            setImageImportOpen(false)
+            setDroppedImage(null)
+          }}
+        />
+      )}
+
+      {/* Full-page hint while dragging an image file in */}
+      {pageDragActive && !imageImportOpen && (
+        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-foreground/30 p-8">
+          <div className="rounded-xl border-2 border-dashed border-primary-foreground/70 bg-primary px-8 py-6 text-center text-primary-foreground shadow-xl">
+            <ImagePlus className="mx-auto mb-2 h-8 w-8" />
+            <p className="text-sm font-bold">Drop the image to import tasks</p>
+            <p className="text-xs opacity-90">Photo of notes or a screenshot</p>
+          </div>
+        </div>
       )}
     </div>
   )
