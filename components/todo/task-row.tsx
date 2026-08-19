@@ -57,7 +57,7 @@ export function TaskRow({
 
       <button
         onClick={onOpen}
-        className={`min-w-0 flex-1 truncate text-left ${compact ? "text-xs" : "text-sm"} ${
+        className={`min-w-0 flex-1 truncate text-left text-xs ${
           task.done ? "text-muted-foreground line-through" : "text-foreground"
         } hover:text-primary`}
         title={task.title}
