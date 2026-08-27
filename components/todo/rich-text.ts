@@ -1,4 +1,4 @@
-// Notes are stored as lightweight HTML (emphasis, lists, fonts, sizes, and colors).
+// Notes are stored as lightweight HTML (bold / italic / underline / bulleted list).
 // These helpers keep the rest of the app working with that format and stay
 // backward-compatible with older plain-text notes.
 
