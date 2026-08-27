@@ -12,7 +12,6 @@ export function SectionCard({
   section,
   hideCompleted,
   query = "",
-  compact = false,
   onAddTask,
   onToggleTask,
   onOpenTask,
@@ -25,7 +24,6 @@ export function SectionCard({
   section: Section
   hideCompleted: boolean
   query?: string
-  compact?: boolean
   onAddTask: (title: string) => void
   onToggleTask: (taskId: string) => void
   onOpenTask: (task: Task) => void
@@ -69,7 +67,7 @@ export function SectionCard({
             aria-label="Drag to reorder section"
             className="shrink-0 cursor-grab touch-none rounded p-0.5 text-muted-foreground/60 hover:bg-secondary hover:text-primary active:cursor-grabbing"
           >
-            <GripVertical className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+            <GripVertical className="h-4 w-4" />
           </button>
         ) : (
           <span className="h-3.5 w-1 shrink-0 rounded-sm bg-primary" aria-hidden />
@@ -86,9 +84,7 @@ export function SectionCard({
             if (e.key === "Enter") (e.target as HTMLInputElement).blur()
           }}
           aria-label="Section title"
-          className={`min-w-0 flex-1 bg-transparent font-bold text-foreground outline-none focus:border-b focus:border-primary ${
-            compact ? "text-xs" : "text-sm"
-          }`}
+          className="min-w-0 flex-1 bg-transparent text-sm font-bold leading-5 text-foreground outline-none focus:border-b focus:border-primary"
         />
         <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
           {doneCount}/{section.tasks.length}
@@ -104,7 +100,7 @@ export function SectionCard({
 
       <div className="px-3 py-1">
         {visibleTasks.length === 0 ? (
-          <p className={`py-2 text-muted-foreground ${compact ? "text-[11px]" : "text-xs"}`}>
+          <p className="py-2 text-xs leading-4 text-muted-foreground">
             {searching
               ? "No matching tasks."
               : section.tasks.length > 0 && hideCompleted
@@ -116,7 +112,6 @@ export function SectionCard({
             <TaskRow
               key={task.id}
               task={task}
-              compact={compact}
               dragHandleProps={searching ? undefined : taskDnd.handle(i)}
               containerProps={searching ? undefined : taskDnd.containerItem(i)}
               dragging={!searching && taskDnd.dragIndex === i}
@@ -141,15 +136,15 @@ export function SectionCard({
           }}
           placeholder="Add a task and press Enter"
           aria-label="Add a task"
-          className="min-w-0 flex-1 rounded border border-input bg-background px-2 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+          className="min-w-0 flex-1 rounded border border-input bg-background px-2 py-1.5 text-xs leading-4 text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
         />
         <button
           onClick={submitDraft}
           aria-label="Add task"
-          className="inline-flex shrink-0 items-center gap-1 rounded bg-primary px-2 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+          className="inline-flex shrink-0 items-center gap-1 rounded bg-primary px-2 py-1.5 text-xs font-semibold leading-4 text-primary-foreground hover:opacity-90"
         >
           <Plus className="h-3.5 w-3.5" />
-          {!compact && "Add"}
+          Add
         </button>
       </div>
     </section>

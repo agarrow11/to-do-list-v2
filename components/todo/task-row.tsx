@@ -10,7 +10,6 @@ export function TaskRow({
   onToggle,
   onOpen,
   onDelete,
-  compact = false,
   dragHandleProps,
   containerProps,
   dragging = false,
@@ -20,7 +19,6 @@ export function TaskRow({
   onToggle: () => void
   onOpen: () => void
   onDelete: () => void
-  compact?: boolean
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
   containerProps?: React.HTMLAttributes<HTMLDivElement> & { draggable?: boolean }
   dragging?: boolean
@@ -32,7 +30,7 @@ export function TaskRow({
   return (
     <div
       {...containerProps}
-      className={`group flex items-center gap-1.5 border-b border-border/70 py-1.5 last:border-b-0 ${
+      className={`group flex min-h-9 items-center gap-1.5 border-b border-border/70 py-1.5 last:border-b-0 ${
         dragging ? "opacity-40" : ""
       } ${over ? "border-t-2 border-t-primary" : ""}`}
     >
@@ -58,7 +56,7 @@ export function TaskRow({
 
       <button
         onClick={onOpen}
-        className={`min-w-0 flex-1 truncate text-left text-xs ${
+        className={`min-w-0 flex-1 truncate text-left text-xs leading-4 ${
           task.done ? "text-muted-foreground line-through" : "text-foreground"
         } hover:text-primary`}
         title={task.title}
