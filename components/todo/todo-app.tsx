@@ -735,7 +735,6 @@ function ReportPanel({
               section={section}
               hideCompleted={hideCompleted}
               query={query}
-              compact
               dragHandleProps={searching ? undefined : sectionDnd.handle(i)}
               onAddTask={(title) => onAddTask(section.id, title)}
               onToggleTask={(taskId) => onToggleTask(section.id, taskId)}

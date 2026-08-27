@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Bold, Highlighter, Italic, List, Palette, Strikethrough, Underline } from "lucide-react"
-import { htmlHasContent, notesToHtml } from "./rich-text"
+import { htmlHasContent, sanitizeNotesHtml } from "./rich-text"
 
 type ActiveState = {
   bold: boolean
@@ -63,7 +63,7 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!editorRef.current) return
-    editorRef.current.innerHTML = notesToHtml(initialHtml)
+    editorRef.current.innerHTML = sanitizeNotesHtml(initialHtml)
     setEmpty(!htmlHasContent(editorRef.current.innerHTML))
     savedRange.current = null
   }, [initialHtml, taskId])
@@ -132,7 +132,18 @@ export function RichTextEditor({
   function commitWhenLeaving(event: React.FocusEvent<HTMLDivElement>) {
     const next = event.relatedTarget as Node | null
     if (next && containerRef.current?.contains(next)) return
-    onCommit(editorRef.current?.innerHTML ?? "")
+    const clean = sanitizeNotesHtml(editorRef.current?.innerHTML ?? "")
+    if (editorRef.current && editorRef.current.innerHTML !== clean) editorRef.current.innerHTML = clean
+    onCommit(clean)
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    event.preventDefault()
+    const clipboardHtml = event.clipboardData.getData("text/html")
+    const clipboardText = event.clipboardData.getData("text/plain")
+    const clean = sanitizeNotesHtml(clipboardHtml || clipboardText)
+    document.execCommand("insertHTML", false, clean)
+    updateEditorState()
   }
 
   const tools: { key: keyof ActiveState; command: string; label: string; Icon: typeof Bold }[] = [
@@ -191,6 +202,7 @@ export function RichTextEditor({
           onInput={updateEditorState}
           onKeyUp={updateEditorState}
           onMouseUp={updateEditorState}
+          onPaste={handlePaste}
           className="rte min-h-[9rem] w-full resize-y overflow-auto px-3 py-2 text-sm leading-relaxed text-foreground outline-none"
         />
       </div>
