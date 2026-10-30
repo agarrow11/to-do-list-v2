@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check, ImagePlus } from "lucide-react"
+import { Plus, Download, EyeOff, Eye, AlertTriangle, Search, X, Database, Save, Upload, Check, ImagePlus, UserMinus } from "lucide-react"
 import type { Board, Owner, Section, Task } from "./types"
 import { defaultBoard, loadBoard, saveBoard, newTask, newSection, newReport, taskMatchesQuery, exportBackup, parseBackup } from "./store"
 import { SectionCard } from "./section"
@@ -168,6 +168,11 @@ export function TodoApp() {
   // Adds a new "My Team" section (a report owner with one flat task list).
   function addReport() {
     setBoard((b) => ({ ...b, owners: [...b.owners, newReport("New team member")] }))
+  }
+
+  function removeReport(reportId: string) {
+    setBoard((b) => ({ ...b, owners: b.owners.filter((o) => o.id !== reportId || o.kind !== "report") }))
+    setDialogTarget((t) => (t?.ownerId === reportId ? null : t))
   }
 
   function reorderTasks(ownerId: string, sectionId: string, fromTaskId: string, toTaskId: string) {
@@ -446,20 +451,12 @@ export function TodoApp() {
 
           {/* My team — 1/3 */}
           <div className="min-w-0 lg:w-1/3">
-            <div className="border-b-2 border-primary pb-1.5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold uppercase tracking-wide">My team</h2>
-                <span className="text-[11px] text-muted-foreground">{reports.length} people</span>
-                <button
-                  onClick={addReport}
-                  className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-secondary"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Section
-                </button>
-              </div>
-              <ProgressBar done={teamCount.done} total={teamCount.total} className="mt-1.5" />
-            </div>
+            <ColumnHeader
+              label="My team"
+              count={teamCount}
+              detail={`${reports.length} ${reports.length === 1 ? "person" : "people"}`}
+              onAddSection={addReport}
+            />
             <div className="mt-3 space-y-4">
               {reports.map((report) => (
                 <ReportPanel
@@ -478,6 +475,7 @@ export function TodoApp() {
                   onReorderTask={(sectionId, fromId, toId) => reorderTasks(report.id, sectionId, fromId, toId)}
                   onReorderSection={(from, to) => reorderSections(report.id, from, to)}
                   onRenameOwner={(name) => renameOwner(report.id, name)}
+                  onRemove={() => removeReport(report.id)}
                 />
               ))}
             </div>
@@ -554,19 +552,19 @@ function countTasks(owner?: Owner): { done: number; total: number } {
 function ColumnHeader({
   label,
   count,
+  detail = `${count.done}/${count.total} done`,
   onAddSection,
 }: {
   label: string
   count: { done: number; total: number }
+  detail?: string
   onAddSection: () => void
 }) {
   return (
     <div className="border-b-2 border-primary pb-1.5">
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-bold uppercase tracking-wide">{label}</h2>
-        <span className="text-[11px] tabular-nums text-muted-foreground">
-          {count.done}/{count.total} done
-        </span>
+        <h2 className="text-sm font-bold uppercase leading-5 tracking-wide">{label}</h2>
+        <span className="text-[11px] leading-4 tabular-nums text-muted-foreground">{detail}</span>
         <button
           onClick={onAddSection}
           className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-secondary"
@@ -672,6 +670,7 @@ function ReportPanel({
   onReorderTask,
   onReorderSection,
   onRenameOwner,
+  onRemove,
 }: {
   report: Owner
   hideCompleted: boolean
@@ -685,8 +684,18 @@ function ReportPanel({
   onReorderTask: (sectionId: string, fromTaskId: string, toTaskId: string) => void
   onReorderSection: (from: number, to: number) => void
   onRenameOwner: (name: string) => void
+  onRemove: () => void
 }) {
   const count = countTasks(report)
+  const open = count.total - count.done
+
+  function confirmRemove() {
+    const what =
+      count.total === 0
+        ? "They have no tasks."
+        : `This deletes all ${count.total} of their tasks${open > 0 ? `, including ${open} still open` : ""}.`
+    if (window.confirm(`Remove ${report.name} from your team? ${what} This can't be undone.`)) onRemove()
+  }
   const initials = report.name.slice(0, 1).toUpperCase()
   const [name, setName] = useState(report.name)
   const sectionDnd = useListDnd(onReorderSection)
@@ -720,6 +729,14 @@ function ReportPanel({
         <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
           {count.done}/{count.total}
         </span>
+        <button
+          onClick={confirmRemove}
+          aria-label={`Remove ${report.name} from team`}
+          title="Remove from team"
+          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-secondary hover:text-primary"
+        >
+          <UserMinus className="h-3.5 w-3.5" />
+        </button>
       </div>
       <ProgressBar done={count.done} total={count.total} className="mb-2.5" />
       <div className="space-y-2.5">
